@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UPC Startup Lab | Simulador IA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); }
+        .fade-in { animation: fadeIn 0.4s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .option-btn:hover { transform: translateX(5px); }
+    </style>
+</head>
+<body class="bg-slate-900 min-h-screen flex items-center justify-center p-4">
+
+    <div class="max-w-xl w-full">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">UPC Startup Lab</h1>
+            <p class="text-slate-400 mt-2">Simulador de emprendimiento con IA - Sede Mina Clavero</p>
+        </header>
+
+        <div id="game-container" class="glass-card rounded-3xl shadow-2xl p-8 transition-all duration-500">
+            <div id="stage-content" class="fade-in">
+                <div id="badge" class="inline-block px-3 py-1 rounded-full bg-blue-100 text-blue-600 text-xs font-bold uppercase tracking-wider mb-4">Etapa 1</div>
+                <h2 id="stage-title" class="text-2xl font-bold text-slate-800 mb-2">La Idea de Automatización</h2>
+                <p id="stage-desc" class="mb-8 text-slate-600 leading-relaxed">Identifica una tarea tediosa que pueda resolverse con IA.</p>
+                <div id="choices" class="space-y-4"></div>
+            </div>
+            
+            <div class="mt-10 pt-6 border-t border-slate-100">
+                <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                    <div id="progress-bar" class="bg-gradient-to-r from-blue-500 to-cyan-400 h-2 rounded-full transition-all duration-500" style="width: 20%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const stages = [
+            { title: "La Idea", desc: "Has detectado ineficiencias en PyMEs locales. ¿Cuál es tu enfoque?", options: [{ text: "Chatbot de atención", next: 1 }, { text: "SaaS de gestión con IA", next: 1 }] },
+            { title: "Prototipado", desc: "Elige tu stack tecnológico para tu MVP.", options: [{ text: "MERN + OpenAI", next: 2 }, { text: "Next.js + Supabase", next: 2 }] },
+            { title: "Validación", desc: "¿Cómo consigues tus primeros clientes en Mina Clavero?", options: [{ text: "Redes locales", next: 3 }, { text: "Google Ads", next: 3 }] },
+            { title: "Escalado", desc: "La demanda crece. ¿Cómo gestionas el trabajo?", options: [{ text: "Pasantes UPC", next: 4 }, { text: "Automatizar con CI/CD", next: 4 }] },
+            { title: "Formalización", desc: "El paso final para tu Startup.", options: [{ text: "Registro Economía Conocimiento", next: -1 }, { text: "Inversores Privados", next: -1 }] }
+        ];
+
+        let currentStage = 0;
+        let userChoices = [];
+
+        function generatePDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            doc.setFontSize(18);
+            doc.text("Plan de Emprendedor - UPC Startup Lab", 20, 20);
+            doc.setFontSize(12);
+            doc.text("Sede Mina Clavero - Emprendimiento Tecnológico", 20, 30);
+            
+            userChoices.forEach((choice, index) => {
+                doc.text(`${index + 1}. Etapa ${stages[index].title}: ${choice}`, 20, 50 + (index * 10));
+            });
+            
+            doc.save("Plan_Emprendedor_UPC.pdf");
+        }
+
+        function renderStage() {
+            const contentEl = document.getElementById('stage-content');
+            if (currentStage === -1) {
+                contentEl.innerHTML = `
+                    <div class="text-center py-6 fade-in">
+                        <div class="text-5xl mb-4">🚀</div>
+                        <h2 class="text-2xl font-bold text-slate-800">¡Startup Lanzada!</h2>
+                        <p class="text-slate-600 mt-2">Descarga tu hoja de ruta en formato PDF.</p>
+                        <button onclick="generatePDF()" class="mt-8 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition shadow-lg">Descargar PDF</button>
+                    </div>
+                `;
+                return;
+            }
+
+            const stage = stages[currentStage];
+            document.getElementById('badge').innerText = `Etapa ${currentStage + 1}`;
+            document.getElementById('stage-title').innerText = stage.title;
+            document.getElementById('stage-desc').innerText = stage.desc;
+            
+            const choicesEl = document.getElementById('choices');
+            choicesEl.innerHTML = '';
+            stage.options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = "option-btn block w-full text-left p-4 bg-slate-50 hover:bg-blue-50 border border-slate-100 rounded-xl transition";
+                btn.innerText = opt.text;
+                btn.onclick = () => {
+                    userChoices.push(opt.text);
+                    currentStage = opt.next;
+                    document.getElementById('progress-bar').style.width = ((currentStage + 1) * 20) + "%";
+                    renderStage();
+                };
+                choicesEl.appendChild(btn);
+            });
+        }
+        window.onload = renderStage;
+    </script>
+</body>
+</html>
